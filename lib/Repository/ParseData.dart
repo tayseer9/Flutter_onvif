@@ -2,16 +2,17 @@ import 'package:onvif/Model/NetworkProtocol.dart';
 import 'package:onvif/Repository/Utils.dart';
 import 'package:xml/xml.dart' as xml;
 
+String prefix = "SOAP-ENV";
+
 Map<String,String> readProbeMatches(String probe){
     Map <String , String> aProbeMatch = <String, String>{};
       final document = xml.parse(probe);
-      String prefix = "SOAP-ENV";
       String header = document.findAllElements("SOAP-ENV:Header")
       .map((relatesTo)=> relatesTo.findAllElements("wsa:RelatesTo").single.text).toString();
        if (removePranteces(header) == ""){
          prefix = "s";
        }
- 
+
         String types = document.findAllElements("$prefix:Body")
         .map((probeMatches)=> probeMatches.findAllElements("d:ProbeMatches")
         .map((probeMatch)=> probeMatch.findAllElements("d:ProbeMatch")
@@ -33,7 +34,7 @@ Map<String,String> readProbeMatches(String probe){
         .map((type)=> type.findAllElements('d:XAddrs').single.text))).toString();
         xAddrs = removePranteces(xAddrs);
         aProbeMatch['XAddrs'] = xAddrs;
-        
+
         String metaDataVersion = document.findAllElements("$prefix:Body")
         .map((probeMatches)=> probeMatches.findAllElements("d:ProbeMatches")
         .map((probeMatch)=> probeMatch.findAllElements("d:ProbeMatch")
@@ -49,14 +50,13 @@ Map<String,String> readProbeMatches(String probe){
         address = removePranteces(address);
         aProbeMatch["Address"] = address;
         return aProbeMatch;
-   
+
 }
 
 Future<DateTime> parseSystemDateAndTime(String aSystemDateAndTime)async{
   String timeType = "tt:UTCDateTime";
   final document = xml.parse(aSystemDateAndTime);
-  String prefix = "SOAP-ENV";
-    bool  body = document.findAllElements("SOAP-ENV:Body").isEmpty;
+    bool  body = document.findAllElements("$prefix:Body").isEmpty;
        if (body){
          prefix = "s";
        }
@@ -66,7 +66,7 @@ Future<DateTime> parseSystemDateAndTime(String aSystemDateAndTime)async{
   .map((systemDateAndTime)=> systemDateAndTime.findAllElements("tds:SystemDateAndTime")
   .map((utcDateTime)=> utcDateTime.findAllElements("tt:UTCDateTime").isNotEmpty)))).toString();
   utcDateTime = removePranteces(utcDateTime);
- 
+
   if (utcDateTime != 'true'){
     timeType = "tt:LocalDateTime";
   }
@@ -130,7 +130,6 @@ Future<DateTime> parseSystemDateAndTime(String aSystemDateAndTime)async{
 Map<String,String> parseGetDeviceInformation(String information){
  Map<String,String>deviceInformation = <String,String>{};
    xml.XmlDocument document = xml.parse(information);
-    String prefix = "SOAP-ENV";
     String model = document.findAllElements("$prefix:Envelope")
     .map((body)=> body.findAllElements("$prefix:Body")
     .map((getDeviceInformationResponse)=> getDeviceInformationResponse.findAllElements("tds:GetDeviceInformationResponse")
@@ -147,7 +146,6 @@ Map<String,String> parseGetDeviceInformation(String information){
 Map<String,String> parseGetCapabilities(String information){
    Map <String,String> capablitiesData = <String , String>{};
         xml.XmlDocument document = xml.parse(information);
-       String prefix = "SOAP-ENV";
       String _xAddr = document.findAllElements("$prefix:Envelope")
         .map((body)=> body.findAllElements("$prefix:Body")
         .map((getCapabilitiesResponse)=>getCapabilitiesResponse.findAllElements("tds:GetCapabilitiesResponse")
@@ -157,7 +155,7 @@ Map<String,String> parseGetCapabilities(String information){
         capablitiesData['XAddr'] = removePranteces(_xAddr);
 
       String events = document.findAllElements("$prefix:Envelope")
-        .map((body)=> body.findAllElements("SOAP-ENV:Body")
+        .map((body)=> body.findAllElements("$prefix:Body")
         .map((getCapabilitiesResponse)=>getCapabilitiesResponse.findAllElements("tds:GetCapabilitiesResponse")
         .map((capabilities)=> capabilities.findAllElements("tds:Capabilities")
         .map((events)=> events.findAllElements("tt:Events")
@@ -184,7 +182,6 @@ Map<String,String> parseGetCapabilities(String information){
   }
 List<NetworkProtocol>parseGetNetworkProtocols(String info){
     xml.XmlDocument document = xml.parse(info);
-       String prefix = "SOAP-ENV";
     String name = document.findAllElements("$prefix:Envelope")
     .map((body)=> body.findAllElements("$prefix:Body")
     .map((getNetworkProtocolsResponse)=> getNetworkProtocolsResponse.findAllElements("tds:GetNetworkProtocolsResponse")
@@ -214,10 +211,9 @@ List<NetworkProtocol>parseGetNetworkProtocols(String info){
        list.add(npObject);
     }
     return list;
-  }  
+  }
 List<String>parseGetProfiles(String profiles){
    xml.XmlDocument document = xml.parse(profiles);
-     String prefix = "SOAP-ENV";
     String token = document.findAllElements("$prefix:Envelope")
     .map((body)=> body.findAllElements("$prefix:Body")
     .map((getProfilesResponse)=> getProfilesResponse.findAllElements("trt:GetProfilesResponse")
@@ -230,9 +226,8 @@ List<String>parseGetProfiles(String profiles){
 }
 String parseGetMediaUri(String result){
    xml.XmlDocument document = xml.parse(result);
-     String prefix = "SOAP-ENV";
     String uri = document.findAllElements("$prefix:Envelope")
-    .map((body)=> body.findAllElements("SOAP-ENV:Body")
+    .map((body) => body.findAllElements("$prefix:Body")
     .map((getStreamUri)=> getStreamUri.findAllElements("trt:GetStreamUriResponse")
     .map((mediaUri)=>mediaUri.findAllElements("trt:MediaUri")
     .map((uri)=>uri.findAllElements("tt:Uri").single.text)))).toString();
